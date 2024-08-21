@@ -22,7 +22,7 @@ find_package(pluginlib REQUIRED)
 
 find_package(dynamixel_sdk REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(dynamixel_interfaces 0.12.0 REQUIRED)
+find_package(dynamixel_interfaces REQUIRED)
 
 ################################################################################
 # Build
