@@ -48,11 +48,11 @@ DynamixelHardware::~DynamixelHardware()
   stop();
 }
 
-hardware_interface::return_type DynamixelHardware::configure(
+hardware_interface::CallbackReturn DynamixelHardware::on_init(
   const hardware_interface::HardwareInfo & info)
 {
-  if (configure_default(info) != hardware_interface::return_type::OK) {
-    return hardware_interface::return_type::ERROR;
+  if (hardware_interface::SystemInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS) {
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   num_of_joints_ = static_cast<size_t>(stoi(info_.hardware_parameters["number_of_joints"]));
@@ -91,9 +91,7 @@ hardware_interface::return_type DynamixelHardware::configure(
       exit(-1);
     }
   }
-  // if (dxl_comm_->InitDxlComm(dxl_id_, port_name_, baud_rate_) != DxlError::OK) {
-  //   return hardware_interface::return_type::ERROR;
-  // }
+
   bool trying_connect = true;
   int trying_cnt = 60;  // second
   int cnt = 0;
@@ -122,17 +120,17 @@ hardware_interface::return_type DynamixelHardware::configure(
 
   // item initialization
   if (!InitDxlItems()) {
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   // set read items & transmissions handler initialization
   if (!InitDxlReadItems()) {
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   // set write items & transmissions handler initialization
   if (!InitDxlWriteItems()) {
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (num_of_transmissions_ != hdl_trans_commands_.size() &&
@@ -141,7 +139,7 @@ hardware_interface::return_type DynamixelHardware::configure(
     RCLCPP_ERROR_STREAM(
       logger_, "Error: number of transmission " << num_of_transmissions_ << ", " <<
         hdl_trans_commands_.size() << ", " << hdl_trans_states_.size());
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   ////////// set comm reset flag
@@ -173,7 +171,7 @@ hardware_interface::return_type DynamixelHardware::configure(
         HW_IF_HARDWARE_STATE != it.name &&
         HW_IF_TORQUE_ENABLE != it.name)
       {
-        return hardware_interface::return_type::ERROR;
+        return hardware_interface::CallbackReturn::ERROR;
       }
       if (it.name != hardware_interface::HW_IF_POSITION &&
         it.name != hardware_interface::HW_IF_VELOCITY &&
@@ -197,7 +195,7 @@ hardware_interface::return_type DynamixelHardware::configure(
         hardware_interface::HW_IF_ACCELERATION != it.name &&
         hardware_interface::HW_IF_EFFORT != it.name)
       {
-        return hardware_interface::return_type::ERROR;
+        return hardware_interface::CallbackReturn::ERROR;
       }
       temp_cmd.interface_name_vec.push_back(it.name);
       temp_cmd.value_ptr_vec.push_back(std::make_shared<double>(0.0));
@@ -211,7 +209,7 @@ hardware_interface::return_type DynamixelHardware::configure(
     RCLCPP_ERROR_STREAM(
       logger_, "Error: number of joints " << num_of_joints_ << ", " <<
         hdl_joint_commands_.size() << ", " << hdl_joint_commands_.size());
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (num_of_joints_ != hdl_joint_commands_.size() &&
@@ -220,7 +218,7 @@ hardware_interface::return_type DynamixelHardware::configure(
     RCLCPP_ERROR_STREAM(
       logger_, "Error: number of joints " << num_of_joints_ << ", " <<
         hdl_joint_commands_.size() << ", " << hdl_joint_commands_.size());
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   ////////// sensor handler setting
@@ -307,8 +305,7 @@ hardware_interface::return_type DynamixelHardware::configure(
     }
   );
 
-  status_ = hardware_interface::status::CONFIGURED;
-  return hardware_interface::return_type::OK;
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 std::vector<hardware_interface::StateInterface>
@@ -367,8 +364,19 @@ DynamixelHardware::export_command_interfaces()
   return command_interfaces;
 }
 
+hardware_interface::CallbackReturn DynamixelHardware::on_activate(
+  const rclcpp_lifecycle::State & previous_state)
+{
+  return start();
+}
 
-hardware_interface::return_type DynamixelHardware::start()
+hardware_interface::CallbackReturn DynamixelHardware::on_deactivate(
+  const rclcpp_lifecycle::State & previous_state)
+{
+  return stop();
+}
+
+hardware_interface::CallbackReturn DynamixelHardware::start()
 {
   // read present state from dxl
   dxl_comm_err_ = CheckError(dxl_comm_->ReadMultiDxlData());
@@ -376,7 +384,7 @@ hardware_interface::return_type DynamixelHardware::start()
     RCLCPP_ERROR_STREAM(
       logger_,
       "Dynamixel Start Fail :" << Dynamixel::DxlErrorToString(dxl_comm_err_));
-    return hardware_interface::return_type::ERROR;
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   // actuator to handler
@@ -408,22 +416,21 @@ hardware_interface::return_type DynamixelHardware::start()
 
   RCLCPP_INFO_STREAM(logger_, "Dynamixel Hardware Start!");
 
-  status_ = hardware_interface::status::STARTED;
-  return hardware_interface::return_type::OK;
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type DynamixelHardware::stop()
+hardware_interface::CallbackReturn DynamixelHardware::stop()
 {
   // torque off
   dxl_comm_->DynamixelDisable(dxl_id_);
 
   RCLCPP_INFO_STREAM(logger_, "Dynamixel Hardware Stop!");
 
-  status_ = hardware_interface::status::STOPPED;
-  return hardware_interface::return_type::OK;
+  return hardware_interface::CallbackReturn::SUCCESS;
 }
 
-hardware_interface::return_type DynamixelHardware::read()
+hardware_interface::return_type DynamixelHardware::read(
+    const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   if (dxl_status_ == REBOOTING) {
     return hardware_interface::return_type::ERROR;
@@ -460,7 +467,8 @@ hardware_interface::return_type DynamixelHardware::read()
   return hardware_interface::return_type::OK;
 }
 
-hardware_interface::return_type DynamixelHardware::write()
+hardware_interface::return_type DynamixelHardware::write(
+    const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   if (dxl_status_ == DXL_OK || dxl_status_ == HW_ERROR) {
     // write item buffer
@@ -600,7 +608,7 @@ bool DynamixelHardware::InitDxlItems()
             static_cast<uint32_t>(stoi(it.second))) != DxlError::OK)
         {
           RCLCPP_ERROR_STREAM(logger_, "[ID:" << std::to_string(id) << "] Wtite Item error");
-          // return hardware_interface::return_type::ERROR;
+          return false;
         }
         RCLCPP_INFO_STREAM(
           logger_,

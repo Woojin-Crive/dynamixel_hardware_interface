@@ -26,12 +26,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 
-#include "hardware_interface/base_interface.hpp"
-#include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
+#include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
-#include "hardware_interface/types/hardware_interface_status_values.hpp"
 
 #include "dynamixel_hardware_interface/visibility_control.h"
 #include "dynamixel_hardware_interface/dynamixel/dynamixel.hpp"
@@ -82,7 +80,7 @@ typedef enum DxlTorqueStatus
 };
 
 class DynamixelHardware : public
-  hardware_interface::BaseInterface<hardware_interface::SystemInterface>, rclcpp::Node
+  hardware_interface::SystemInterface, rclcpp::Node
 {
 public:
   DynamixelHardware();
@@ -91,7 +89,7 @@ public:
   // RCLCPP_SHARED_PTR_DEFINITIONS(DynamixelHardware)
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
-  hardware_interface::return_type configure(const hardware_interface::HardwareInfo & info) override;
+  hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
@@ -100,16 +98,18 @@ public:
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
-  hardware_interface::return_type start() override;
+  hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
-  hardware_interface::return_type stop() override;
+  hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
-  hardware_interface::return_type read() override;
+  hardware_interface::return_type  read(
+    const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
-  hardware_interface::return_type write() override;
+  hardware_interface::return_type  write(
+    const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
   ///// ros
@@ -121,8 +121,11 @@ private:
   std::map<uint8_t /*id*/, uint8_t /*err*/> dxl_hw_err_;
   DxlTorqueStatus dxl_torque_status_;
   std::map<uint8_t /*id*/, bool /*enable*/> dxl_torque_state_;
-
   double err_timeout_sec_;
+
+  hardware_interface::CallbackReturn start();
+
+  hardware_interface::CallbackReturn stop();
 
   DxlError CheckError(DxlError dxl_comm_err);
 

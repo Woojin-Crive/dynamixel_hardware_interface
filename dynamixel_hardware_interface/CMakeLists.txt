@@ -19,6 +19,7 @@ find_package(ament_cmake REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(realtime_tools REQUIRED)
 
 find_package(dynamixel_sdk REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -49,6 +50,7 @@ ament_target_dependencies(
   dynamixel_sdk
   std_srvs
   dynamixel_interfaces
+  realtime_tools
 )
 
 pluginlib_export_plugin_description_file(hardware_interface dynamixel_hardware_interface_plugin.xml)
