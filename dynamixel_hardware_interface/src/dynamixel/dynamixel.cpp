@@ -764,9 +764,10 @@ DxlError Dynamixel::SetSyncReadItemAndHandler()
 //          it_read_data.item_name.at(item_index).c_str());
       } else {
         fprintf(
-          stderr, "[ID:%03d] Failed to Indirect Address Read Item : [%s]\n",
+          stderr, "[ID:%03d] Failed to Indirect Address Read Item : [%s], %d\n",
           it_read_data.id,
-          it_read_data.item_name.at(item_index).c_str());
+          it_read_data.item_name.at(item_index).c_str(),
+          result);
       }
     }
   }
@@ -890,9 +891,10 @@ DxlError Dynamixel::SetBulkReadItemAndHandler()
           it_read_data.item_name.at(item_index).c_str());
       } else {
         fprintf(
-          stderr, "[ID:%03d] Failed to Indirect Address Read Item : [%s]\n",
+          stderr, "[ID:%03d] Failed to Indirect Address Read Item : [%s], %d\n",
           it_read_data.id,
-          it_read_data.item_name.at(item_index).c_str());
+          it_read_data.item_name.at(item_index).c_str(),
+          result);
       }
     }
   }

@@ -67,7 +67,3 @@ Address	Size	Data Name
 156	2	External Port Data 3
 168	2	Indirect Address 1
 224	1	Indirect Data 1
-168	2	Indirect Address Read
-224	1	Indirect Data Read
-578	2	Indirect Address Write
-634	1	Indirect Data Write
