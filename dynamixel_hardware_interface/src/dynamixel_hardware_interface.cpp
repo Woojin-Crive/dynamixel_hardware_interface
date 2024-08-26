@@ -246,6 +246,7 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
   dxl_state_pub_uni_ptr_->lock();
   dxl_state_pub_uni_ptr_->msg_.id.resize(num_of_pub_data);
   dxl_state_pub_uni_ptr_->msg_.dxl_hw_state.resize(num_of_pub_data);
+  dxl_state_pub_uni_ptr_->msg_.torque_state.resize(num_of_pub_data);
   dxl_state_pub_uni_ptr_->unlock();
 
   // ros srv server
