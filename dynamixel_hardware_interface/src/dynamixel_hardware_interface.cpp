@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/
-/* Authors: Hye-Jong KIM, Yong-Ho Na */
+/* Authors: Hye-Jong KIM, Yong-Ho Na, Sungho Woo */
 
 #include "dynamixel_hardware_interface/dynamixel_hardware_interface.hpp"
 
@@ -34,7 +34,6 @@ DynamixelHardware::DynamixelHardware()
 : rclcpp::Node("dynamixel_hardware_interface"),
   logger_(rclcpp::get_logger("dynamixel_hardware_interface"))
 {
-  // init. error state
   dxl_status_ = DXL_OK;
   dxl_torque_status_ = TORQUE_ENABLED;
   err_timeout_sec_ = 3.0;
@@ -42,10 +41,11 @@ DynamixelHardware::DynamixelHardware()
 
 DynamixelHardware::~DynamixelHardware()
 {
-  if (ros_update_thread_.joinable()) {
-    ros_update_thread_.join();
-  }
   stop();
+
+  if (rclcpp::ok()) {
+    RCLCPP_INFO(logger_, "Shutting down ROS2 node...");
+  }
 }
 
 hardware_interface::CallbackReturn DynamixelHardware::on_init(
@@ -60,8 +60,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     static_cast<size_t>(stoi(info_.hardware_parameters["number_of_transmissions"]));
   SetMatrix();
 
-  ////////// communication setting
-  // Dynamixel Communication Setting
   port_name_ = info_.hardware_parameters["port_name"];
   baud_rate_ = info_.hardware_parameters["baud_rate"];
   err_timeout_sec_ = stod(info_.hardware_parameters["error_timeout_sec"]);
@@ -70,15 +68,12 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     logger_,
     "port_name " << port_name_.c_str() << " / baudrate " << baud_rate_.c_str());
 
-  // Dynamixel Model Setting
   std::string dxl_model_folder = info_.hardware_parameters["dynamixel_model_folder"];
   dxl_comm_ = std::unique_ptr<Dynamixel>(
     new Dynamixel(
       (ament_index_cpp::get_package_share_directory("dynamixel_hardware_interface") +
       dxl_model_folder).c_str()));
 
-  ////////// gpio (dxl) setting
-  // init communication
   RCLCPP_INFO_STREAM(logger_, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
   RCLCPP_INFO_STREAM(logger_, "$$$$$ Init Dxl Comm Port");
   for (const hardware_interface::ComponentInfo & gpio : info_.gpios) {
@@ -93,7 +88,7 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
   }
 
   bool trying_connect = true;
-  int trying_cnt = 60;  // second
+  int trying_cnt = 60;
   int cnt = 0;
 
   while (trying_connect) {
@@ -104,7 +99,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     for (auto sensor : sensor_id_) {
       id_arr.push_back(sensor);
     }
-    // init communication
     if (dxl_comm_->InitDxlComm(id_arr, port_name_, baud_rate_) == DxlError::OK) {
       RCLCPP_INFO_STREAM(logger_, "Trying to connect to the communication port...");
       trying_connect = false;
@@ -116,19 +110,16 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
         cnt = 0;
       }
     }
-  }  // end of while
+  }
 
-  // item initialization
   if (!InitDxlItems()) {
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // set read items & transmissions handler initialization
   if (!InitDxlReadItems()) {
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // set write items & transmissions handler initialization
   if (!InitDxlWriteItems()) {
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -142,24 +133,19 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  ////////// set comm reset flag
   dxl_status_ = DXL_OK;
 
-  ////////// joint handler setting
   hdl_joint_states_.clear();
   for (const hardware_interface::ComponentInfo & joint : info_.joints) {
     HandlerVarType temp_state;
     temp_state.name = joint.name;
 
-    // position
     temp_state.interface_name_vec.push_back(hardware_interface::HW_IF_POSITION);
     temp_state.value_ptr_vec.push_back(std::make_shared<double>(0.0));
 
-    // velocity
     temp_state.interface_name_vec.push_back(hardware_interface::HW_IF_VELOCITY);
     temp_state.value_ptr_vec.push_back(std::make_shared<double>(0.0));
 
-    // effort
     temp_state.interface_name_vec.push_back(hardware_interface::HW_IF_EFFORT);
     temp_state.value_ptr_vec.push_back(std::make_shared<double>(0.0));
 
@@ -221,7 +207,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  ////////// sensor handler setting
   hdl_sensor_states_.clear();
   for (const hardware_interface::ComponentInfo & sensor : info_.sensors) {
     HandlerVarType temp_state;
@@ -234,8 +219,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     hdl_sensor_states_.push_back(temp_state);
   }
 
-  ///// ROS param
-  // ros msg pub
   std::string str_dxl_state_pub_name =
     info_.hardware_parameters["dynamixel_state_pub_msg_name"];
   dxl_state_pub_ = this->create_publisher<DynamixelStateMsg>(
@@ -249,7 +232,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
   dxl_state_pub_uni_ptr_->msg_.torque_state.resize(num_of_pub_data);
   dxl_state_pub_uni_ptr_->unlock();
 
-  // ros srv server
   using namespace std::placeholders;
   std::string str_get_dxl_data_srv_name =
     info_.hardware_parameters["get_dynamixel_data_srv_name"];
@@ -275,36 +257,7 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     str_set_dxl_torque_srv_name,
     std::bind(&DynamixelHardware::set_dxl_torque_srv_callback, this, _1, _2));
 
-  ///// ros publish & ros spin thread
   ros_update_freq_ = stoi(info_.hardware_parameters["ros_update_freq"]);
-  ros_update_thread_ = std::thread(
-    [this]() {
-      RCLCPP_INFO_STREAM(logger_, "ros_update rate is " << ros_update_freq_ << "hz");
-      while (rclcpp::ok()) {
-        // dxl state pub
-        size_t index = 0;
-        if (dxl_state_pub_uni_ptr_ && dxl_state_pub_uni_ptr_->trylock()) {
-          dxl_state_pub_uni_ptr_->msg_.header.stamp = this->now();
-          dxl_state_pub_uni_ptr_->msg_.comm_state = dxl_comm_err_;
-          for (auto it : hdl_trans_states_) {
-            dxl_state_pub_uni_ptr_->msg_.id.at(index) = it.id;
-            dxl_state_pub_uni_ptr_->msg_.dxl_hw_state.at(index) = dxl_hw_err_[it.id];
-            dxl_state_pub_uni_ptr_->msg_.torque_state.at(index) = dxl_torque_state_[it.id];
-            index++;
-          }
-          dxl_state_pub_uni_ptr_->unlockAndPublish();
-        }
-
-        // ros spin
-        rclcpp::spin_some(this->get_node_base_interface());
-
-        // ros_update thread time sleep
-        struct timespec duration{};
-        duration.tv_nsec = 1000000000 / ros_update_freq_;
-        clock_nanosleep(CLOCK_MONOTONIC, 0, &duration, nullptr);
-      }
-    }
-  );
 
   return hardware_interface::CallbackReturn::SUCCESS;
 }
@@ -314,7 +267,6 @@ DynamixelHardware::export_state_interfaces()
 {
   std::vector<hardware_interface::StateInterface> state_interfaces;
 
-  // transmissions
   for (auto it : hdl_trans_states_) {
     for (size_t i = 0; i < it.value_ptr_vec.size(); i++) {
       state_interfaces.emplace_back(
@@ -322,7 +274,6 @@ DynamixelHardware::export_state_interfaces()
           it.name, it.interface_name_vec.at(i), it.value_ptr_vec.at(i).get()));
     }
   }
-  // joints
   for (auto it : hdl_joint_states_) {
     for (size_t i = 0; i < it.value_ptr_vec.size(); i++) {
       state_interfaces.emplace_back(
@@ -330,7 +281,6 @@ DynamixelHardware::export_state_interfaces()
           it.name, it.interface_name_vec.at(i), it.value_ptr_vec.at(i).get()));
     }
   }
-  // sensors
   for (auto it : hdl_sensor_states_) {
     for (size_t i = 0; i < it.value_ptr_vec.size(); i++) {
       state_interfaces.emplace_back(
@@ -346,7 +296,6 @@ DynamixelHardware::export_command_interfaces()
 {
   std::vector<hardware_interface::CommandInterface> command_interfaces;
 
-  // transmissions
   for (auto it : hdl_trans_commands_) {
     for (size_t i = 0; i < it.value_ptr_vec.size(); i++) {
       command_interfaces.emplace_back(
@@ -354,7 +303,6 @@ DynamixelHardware::export_command_interfaces()
           it.name, it.interface_name_vec.at(i), it.value_ptr_vec.at(i).get()));
     }
   }
-  // joints
   for (auto it : hdl_joint_commands_) {
     for (size_t i = 0; i < it.value_ptr_vec.size(); i++) {
       command_interfaces.emplace_back(
@@ -379,7 +327,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_deactivate(
 
 hardware_interface::CallbackReturn DynamixelHardware::start()
 {
-  // read present state from dxl
   dxl_comm_err_ = CheckError(dxl_comm_->ReadMultiDxlData());
   if (dxl_comm_err_ != DxlError::OK) {
     RCLCPP_ERROR_STREAM(
@@ -388,7 +335,6 @@ hardware_interface::CallbackReturn DynamixelHardware::start()
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // actuator to handler
   CalcTransmissionToJoint();
 
   // sync commands = states joint
@@ -410,7 +356,7 @@ hardware_interface::CallbackReturn DynamixelHardware::start()
     }
   }
 
-  usleep(500 * 1000);  // 500ms
+  usleep(500 * 1000);
 
   // torque on
   dxl_comm_->DynamixelEnable(dxl_id_);
@@ -436,7 +382,6 @@ hardware_interface::return_type DynamixelHardware::read(
   if (dxl_status_ == REBOOTING) {
     return hardware_interface::return_type::ERROR;
   } else if (dxl_status_ == DXL_OK || dxl_status_ == COMM_ERROR) {
-    // read dxl
     dxl_comm_err_ = CheckError(dxl_comm_->ReadMultiDxlData());
     if (dxl_comm_err_ != DxlError::OK) {
       RCLCPP_ERROR_STREAM(
@@ -445,7 +390,6 @@ hardware_interface::return_type DynamixelHardware::read(
       return hardware_interface::return_type::ERROR;
     }
   } else if (dxl_status_ == HW_ERROR) {
-    // read dxl
     dxl_comm_err_ = CheckError(dxl_comm_->ReadMultiDxlData());
     if (dxl_comm_err_ != DxlError::OK) {
       RCLCPP_ERROR_STREAM(
@@ -454,17 +398,30 @@ hardware_interface::return_type DynamixelHardware::read(
     }
   }
 
-  // actuator to handler
   CalcTransmissionToJoint();
 
-  // read sensor
   for (auto sensor : hdl_gpio_sensor_states_) {
     ReadSensorData(sensor);
   }
 
-  // read item buffer
   dxl_comm_->ReadItemBuf();
 
+  size_t index = 0;
+  if (dxl_state_pub_uni_ptr_ && dxl_state_pub_uni_ptr_->trylock()) {
+    dxl_state_pub_uni_ptr_->msg_.header.stamp = this->now();
+    dxl_state_pub_uni_ptr_->msg_.comm_state = dxl_comm_err_;
+    for (auto it : hdl_trans_states_) {
+      dxl_state_pub_uni_ptr_->msg_.id.at(index) = it.id;
+      dxl_state_pub_uni_ptr_->msg_.dxl_hw_state.at(index) = dxl_hw_err_[it.id];
+      dxl_state_pub_uni_ptr_->msg_.torque_state.at(index) = dxl_torque_state_[it.id];
+      index++;
+    }
+    dxl_state_pub_uni_ptr_->unlockAndPublish();
+  }
+
+if (rclcpp::ok()) {
+    rclcpp::spin_some(this->get_node_base_interface());
+}
   return hardware_interface::return_type::OK;
 }
 
@@ -472,23 +429,16 @@ hardware_interface::return_type DynamixelHardware::write(
     const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   if (dxl_status_ == DXL_OK || dxl_status_ == HW_ERROR) {
-    // write item buffer
     dxl_comm_->WriteItemBuf();
 
-    // write torque state
     ChangeDxlTorqueState();
 
-    // handler to actuator
     CalcJointToTransmission();
 
-    // write dxl
     dxl_comm_->WriteMultiDxlData();
-    // USB에서 tx가 성공하면 error 코드를 발생시키지 않으므로 dxl에 tx가 성공했는지 알 수 없음
-    // -> error 체크는 read 함수에서만 실행
 
     return hardware_interface::return_type::OK;
   } else {
-    // REBOOTING and COMM_ERROR
     return hardware_interface::return_type::ERROR;
   }
 }
@@ -511,19 +461,19 @@ DxlError DynamixelHardware::CheckError(DxlError dxl_comm_err)
       if (hdl_trans_states_.at(i).interface_name_vec.at(j) == "Hardware Error Status") {
         dxl_hw_err_[hdl_trans_states_.at(i).id] = *hdl_trans_states_.at(i).value_ptr_vec.at(j);
         std::string error_string = "";
-        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x01) {  // input voltage error
+        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x01) {
           error_string += "input voltage error/ ";
         }
-        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x04) {  // overheating
+        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x04) {
           error_string += "overheating/ ";
         }
-        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x08) {  // motor encoder
+        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x08) {
           error_string += "motor encoder/ ";
         }
-        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x16) {  // electrical shork
+        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x16) {
           error_string += "electrical shork/ ";
         }
-        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x32) {  // Overload
+        if (dxl_hw_err_[hdl_trans_states_.at(i).id] & 0x32) {
           error_string += "Overload/ ";
         }
 
@@ -556,17 +506,13 @@ bool DynamixelHardware::CommReset()
 {
   dxl_status_ = REBOOTING;
   stop();
-
   RCLCPP_INFO_STREAM(logger_, "Communication Reset Start");
-  // clear comm port handler clear
   dxl_comm_->RWDataReset();
 
-  // Get the start time
   auto start_time = this->now();
   while ((this->now() - start_time) < rclcpp::Duration(3, 0)) {
     usleep(200 * 1000);
     RCLCPP_INFO_STREAM(logger_, "Reset Start");
-    // reboot dxl
     bool result = true;
     for (auto id : dxl_id_) {
       if (dxl_comm_->Reboot(id) != DxlError::OK) {
@@ -577,14 +523,10 @@ bool DynamixelHardware::CommReset()
       usleep(200 * 1000);
     }
     if (!result) {continue;}
-    // 다이나믹셀의 초기 설정값을 세팅합니다.
     if (!InitDxlItems()) {continue;}
-    // 다이나믹셀의 read item을 설정합니다.
     if (!InitDxlReadItems()) {continue;}
-    // 다이나믹셀의 write item을 설정합니다.
     if (!InitDxlWriteItems()) {continue;}
 
-    // Reboot Success
     RCLCPP_INFO_STREAM(logger_, "RESET Success");
     usleep(1000 * 1000);
     start();
@@ -661,7 +603,6 @@ bool DynamixelHardware::InitDxlReadItems()
             temp_read.interface_name_vec.push_back(it.name);
             temp_read.value_ptr_vec.push_back(std::make_shared<double>(0.0));
 
-            // init. hardware error state
             if (it.name == "Hardware Error Status") {
               dxl_hw_err_[id] = 0x00;
             }
@@ -709,7 +650,6 @@ bool DynamixelHardware::InitDxlWriteItems()
     hdl_trans_commands_.clear();
     for (const hardware_interface::ComponentInfo & gpio : info_.gpios) {
       if (gpio.command_interfaces.size()) {
-        // write item
         uint8_t id = static_cast<uint8_t>(stoi(gpio.parameters.at("ID")));
         for (auto it : gpio.command_interfaces) {
           HandlerVarType temp_write;
@@ -763,7 +703,6 @@ void DynamixelHardware::SetMatrix()
   std::string str;
   std::vector<double> d_vec;
 
-  /////////////////////
   // dynamic allocation (number_of_transmissions x number_of_joint)
   transmission_to_joint_matrix_ = new double *[num_of_joints_];
   for (size_t i = 0; i < num_of_joints_; i++) {
@@ -789,9 +728,6 @@ void DynamixelHardware::SetMatrix()
     fprintf(stderr, "\n");
   }
 
-
-  /////////////////////
-  // dynamic allocation (number_of_joint x number_of_transmissions)
   joint_to_transmission_matrix_ = new double *[num_of_transmissions_];
   for (size_t i = 0; i < num_of_transmissions_; i++) {
     joint_to_transmission_matrix_[i] = new double[num_of_joints_];
@@ -819,8 +755,6 @@ void DynamixelHardware::SetMatrix()
 }
 void DynamixelHardware::CalcTransmissionToJoint()
 {
-  // read
-  // position
   for (size_t i = 0; i < num_of_joints_; i++) {
     double value = 0.0;
     for (size_t j = 0; j < num_of_transmissions_; j++) {
@@ -830,7 +764,6 @@ void DynamixelHardware::CalcTransmissionToJoint()
     *hdl_joint_states_.at(i).value_ptr_vec.at(PRESENT_POSITION_INDEX) = value;
   }
 
-  // velocity
   for (size_t i = 0; i < num_of_joints_; i++) {
     double value = 0.0;
     for (size_t j = 0; j < num_of_transmissions_; j++) {
@@ -840,7 +773,6 @@ void DynamixelHardware::CalcTransmissionToJoint()
     *hdl_joint_states_.at(i).value_ptr_vec.at(PRESENT_VELOCITY_INDEX) = value;
   }
 
-  // effort
   for (size_t i = 0; i < num_of_joints_; i++) {
     double value = 0.0;
     for (size_t j = 0; j < num_of_transmissions_; j++) {
@@ -926,7 +858,6 @@ void DynamixelHardware::get_dxl_data_srv_callback(
   }
   rclcpp::Time t_start = rclcpp::Clock().now();
   while (dxl_comm_->CheckReadItemBuf(id, name) == false) {
-    // time check
     if ((rclcpp::Clock().now() - t_start).seconds() > timeout_sec) {
       RCLCPP_ERROR_STREAM(
         logger_,
@@ -991,7 +922,6 @@ void DynamixelHardware::set_dxl_torque_srv_callback(
   // Get the start time
   auto start = std::chrono::steady_clock::now();
   while (std::chrono::steady_clock::now() - start < std::chrono::seconds(1)) {
-    // std::cout << "dxl_torque_status_ : " << dxl_torque_status_ << std::endl;
     if (dxl_torque_status_ == TORQUE_ENABLED) {
       if (request->data) {
         response->success = true;
@@ -1011,7 +941,6 @@ void DynamixelHardware::set_dxl_torque_srv_callback(
       }
       return;
     }
-    // Wait for 50ms
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
   response->success = false;

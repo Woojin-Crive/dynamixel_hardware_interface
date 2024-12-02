@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/
-/* Authors: Hye-Jong KIM, Yong-Ho Na */
+/* Authors: Hye-Jong KIM, Yong-Ho Na, Sungho Woo */
 
 #ifndef DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL_HARDWARE_INTERFACE_HPP_
 #define DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL_HARDWARE_INTERFACE_HPP_
@@ -51,62 +51,120 @@
 namespace dynamixel_hardware_interface
 {
 
+/**
+ * @brief Constants for hardware state interface names.
+ */
 constexpr char HW_IF_HARDWARE_STATE[] = "hardware_state";
 constexpr char HW_IF_TORQUE_ENABLE[] = "torque_enable";
 
-
+/**
+ * @brief Struct for handling variable types associated with Dynamixel components.
+ */
 typedef struct HandlerVarType_
 {
-  uint8_t id;
-  std::string name;
-  std::vector<std::string> interface_name_vec;
-  std::vector<std::shared_ptr<double>> value_ptr_vec;
+  uint8_t id;                                /**< ID of the Dynamixel component. */
+  std::string name;                          /**< Name of the component. */
+  std::vector<std::string> interface_name_vec; /**< Vector of interface names. */
+  std::vector<std::shared_ptr<double>> value_ptr_vec; /**< Vector of pointers to interface values. */
 } HandlerVarType;
 
+/**
+ * @brief Enum for Dynamixel status.
+ */
 typedef enum DxlStatus
 {
-  DXL_OK = 0,
-  HW_ERROR = 1,
-  COMM_ERROR = 2,
-  REBOOTING = 3,
-};
+  DXL_OK = 0,    /**< Normal status. */
+  HW_ERROR = 1,  /**< Hardware error status. */
+  COMM_ERROR = 2,/**< Communication error status. */
+  REBOOTING = 3, /**< Rebooting status. */
+} DxlStatus;
 
+/**
+ * @brief Enum for Dynamixel torque status.
+ */
 typedef enum DxlTorqueStatus
 {
-  TORQUE_ENABLED = 0,
-  TORQUE_DISABLED = 1,
-  REQUESTED_TO_ENABLE = 2,
-  REQUESTED_TO_DISABLE = 3,
-};
+  TORQUE_ENABLED = 0,        /**< Torque is enabled. */
+  TORQUE_DISABLED = 1,       /**< Torque is disabled. */
+  REQUESTED_TO_ENABLE = 2,   /**< Torque enable is requested. */
+  REQUESTED_TO_DISABLE = 3,  /**< Torque disable is requested. */
+} DxlTorqueStatus;
 
+/**
+ * @class DynamixelHardware
+ * @brief Class for interfacing with Dynamixel hardware using the ROS2 hardware interface.
+ *
+ * This class is responsible for initializing, reading, and writing to Dynamixel actuators.
+ * It also handles errors, resets, and publishes state information using ROS2 services and topics.
+ */
 class DynamixelHardware : public
   hardware_interface::SystemInterface, rclcpp::Node
 {
 public:
+  /**
+   * @brief Constructor for DynamixelHardware.
+   */
   DynamixelHardware();
+
+  /**
+   * @brief Destructor for DynamixelHardware.
+   */
   ~DynamixelHardware();
 
-  // RCLCPP_SHARED_PTR_DEFINITIONS(DynamixelHardware)
-
+  /**
+   * @brief Initialization callback for hardware interface.
+   * @param info Hardware information for the system.
+   * @return Callback return indicating success or error.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_init(const hardware_interface::HardwareInfo & info) override;
 
+  /**
+   * @brief Exports state interfaces for ROS2.
+   * @return A vector of state interfaces.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
 
+  /**
+   * @brief Exports command interfaces for ROS2.
+   * @return A vector of command interfaces.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
 
+  /**
+   * @brief Callback for activating the hardware interface.
+   * @param previous_state Previous lifecycle state.
+   * @return Callback return indicating success or error.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_activate(const rclcpp_lifecycle::State & previous_state) override;
 
+  /**
+   * @brief Callback for deactivating the hardware interface.
+   * @param previous_state Previous lifecycle state.
+   * @return Callback return indicating success or error.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::CallbackReturn on_deactivate(const rclcpp_lifecycle::State & previous_state) override;
 
+  /**
+   * @brief Reads data from the hardware.
+   * @param time Current time.
+   * @param period Duration since the last read.
+   * @return Hardware interface return type indicating success or error.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::return_type  read(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
+  /**
+   * @brief Writes data to the hardware.
+   * @param time Current time.
+   * @param period Duration since the last write.
+   * @return Hardware interface return type indicating success or error.
+   */
   DYNAMIXEL_HARDWARE_INTERFACE_PUBLIC
   hardware_interface::return_type  write(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
@@ -123,12 +181,29 @@ private:
   std::map<uint8_t /*id*/, bool /*enable*/> dxl_torque_state_;
   double err_timeout_sec_;
 
+  /**
+   * @brief Starts the hardware interface.
+   * @return Callback return indicating success or error.
+   */
   hardware_interface::CallbackReturn start();
 
+  /**
+   * @brief Stops the hardware interface.
+   * @return Callback return indicating success or error.
+   */
   hardware_interface::CallbackReturn stop();
 
+  /**
+   * @brief Checks for communication errors.
+   * @param dxl_comm_err The communication error status.
+   * @return The resulting error status.
+   */
   DxlError CheckError(DxlError dxl_comm_err);
 
+  /**
+   * @brief Resets communication with the hardware.
+   * @return True if the reset was successful, false otherwise.
+   */
   bool CommReset();
 
   ///// dxl variable
@@ -137,7 +212,6 @@ private:
   std::string baud_rate_;
   std::vector<uint8_t> dxl_id_;
 
-  ///// sensor variable
   std::vector<uint8_t> sensor_id_;
   std::map<uint8_t /*id*/, std::string /*interface_name*/> sensor_item_;
 
@@ -157,27 +231,61 @@ private:
   double ** transmission_to_joint_matrix_;
   double ** joint_to_transmission_matrix_;
 
+  /**
+   * @brief Initializes the Dynamixel items.
+   * @return True if initialization was successful, false otherwise.
+   */
   bool InitDxlItems();
+
+  /**
+   * @brief Initializes the read items for Dynamixel.
+   * @return True if initialization was successful, false otherwise.
+   */
   bool InitDxlReadItems();
+
+  /**
+   * @brief Initializes the write items for Dynamixel.
+   * @return True if initialization was successful, false otherwise.
+   */
   bool InitDxlWriteItems();
 
+  /**
+   * @brief Reads sensor data.
+   * @param sensor The sensor handler variable.
+   */
   void ReadSensorData(const HandlerVarType & sensor);
 
-  ///// fuction
+  ///// function
+  /**
+   * @brief Sets up the joint-to-transmission and transmission-to-joint matrices.
+   */
   void SetMatrix();
+
+  /**
+   * @brief Calculates the joint states from transmission states.
+   */
   void CalcTransmissionToJoint();
+
+  /**
+   * @brief Calculates the transmission commands from joint commands.
+   */
   void CalcJointToTransmission();
 
+  /**
+   * @brief Synchronizes joint commands with the joint states.
+   */
   void SyncJointCommandWithStates();
 
+  /**
+   * @brief Changes the torque state of the Dynamixel.
+   */
   void ChangeDxlTorqueState();
 
-  ///// ROS
   using DynamixelStateMsg = dynamixel_interfaces::msg::DynamixelState;
   using StatePublisher = realtime_tools::RealtimePublisher<DynamixelStateMsg>;
   rclcpp::Publisher<DynamixelStateMsg>::SharedPtr dxl_state_pub_;
   std::unique_ptr<StatePublisher> dxl_state_pub_uni_ptr_;
-  // srv server
+
   rclcpp::Service<dynamixel_interfaces::srv::GetDataFromDxl>::SharedPtr get_dxl_data_srv_;
   void get_dxl_data_srv_callback(
     const std::shared_ptr<dynamixel_interfaces::srv::GetDataFromDxl::Request> request,
@@ -198,9 +306,7 @@ private:
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response);
 
-  // timer
   int ros_update_freq_;
-  std::thread ros_update_thread_;
 };
 
 }  // namespace dynamixel_hardware_interface
