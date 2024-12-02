@@ -818,11 +818,11 @@ void DynamixelHardware::SyncJointCommandWithStates()
 void DynamixelHardware::ChangeDxlTorqueState()
 {
   if (dxl_torque_status_ == REQUESTED_TO_ENABLE) {
-    std::cout << "torque enalble" << std::endl;
+    std::cout << "torque enable" << std::endl;
     dxl_comm_->DynamixelEnable(dxl_id_);
     SyncJointCommandWithStates();
   } else if (dxl_torque_status_ == REQUESTED_TO_DISABLE) {
-    std::cout << "torque disalble" << std::endl;
+    std::cout << "torque disable" << std::endl;
     dxl_comm_->DynamixelDisable(dxl_id_);
     SyncJointCommandWithStates();
   }
