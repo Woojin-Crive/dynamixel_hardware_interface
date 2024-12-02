@@ -548,7 +548,7 @@ bool DynamixelHardware::InitDxlItems()
             id, it.first,
             static_cast<uint32_t>(stoi(it.second))) != DxlError::OK)
         {
-          RCLCPP_ERROR_STREAM(logger_, "[ID:" << std::to_string(id) << "] Wtite Item error");
+          RCLCPP_ERROR_STREAM(logger_, "[ID:" << std::to_string(id) << "] Write Item error");
           return false;
         }
         RCLCPP_INFO_STREAM(
@@ -775,9 +775,9 @@ void DynamixelHardware::CalcTransmissionToJoint()
     double value = 0.0;
     for (size_t j = 0; j < num_of_transmissions_; j++) {
       value += transmission_to_joint_matrix_[i][j] *
-        (*hdl_trans_states_.at(j).value_ptr_vec.at(PRESENT_ERROT_INDEX));
+        (*hdl_trans_states_.at(j).value_ptr_vec.at(PRESENT_EFFORT_INDEX));
     }
-    *hdl_joint_states_.at(i).value_ptr_vec.at(PRESENT_ERROT_INDEX) = value;
+    *hdl_joint_states_.at(i).value_ptr_vec.at(PRESENT_EFFORT_INDEX) = value;
   }
 }
 

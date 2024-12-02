@@ -140,7 +140,7 @@ private:
   // sync write
   dynamixel::GroupSyncWrite * group_sync_write_;
   // indirect inform for sync write
-  std::map<uint8_t /*id*/, IndirectInfo> indirict_info_write_;
+  std::map<uint8_t /*id*/, IndirectInfo> indirect_info_write_;
 
   // bulk write
   dynamixel::GroupBulkWrite * group_bulk_write_;

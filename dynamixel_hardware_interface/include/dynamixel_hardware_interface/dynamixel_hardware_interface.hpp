@@ -46,7 +46,7 @@
 
 #define PRESENT_POSITION_INDEX 0
 #define PRESENT_VELOCITY_INDEX 1
-#define PRESENT_ERROT_INDEX 2
+#define PRESENT_EFFORT_INDEX 2
 
 namespace dynamixel_hardware_interface
 {
