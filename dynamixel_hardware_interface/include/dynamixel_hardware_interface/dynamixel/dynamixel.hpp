@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/
-/* Authors: Hye-Jong KIM, Yong-Ho Na*/
+/* Authors: Hye-Jong KIM, Yong-Ho Na, Sungho Woo*/
 
 #ifndef DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL__DYNAMIXEL_HPP_
 #define DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL__DYNAMIXEL_HPP_
@@ -32,91 +32,95 @@
 namespace dynamixel_hardware_interface
 {
 
-// dxl control mode
-#define DXL_CURRENT_CTRL_MODE   0
-#define DXL_POSITION_CTRL_MODE  3
-#define DXL_VELOCITY_CTRL_MODE  1
+/// @brief Control modes for Dynamixel motors.
+#define DXL_CURRENT_CTRL_MODE   0  ///< Current control mode.
+#define DXL_POSITION_CTRL_MODE  3  ///< Position control mode.
+#define DXL_VELOCITY_CTRL_MODE  1  ///< Velocity control mode.
 
-// dxl torque states
-#define TORQUE_ON  1
-#define TORQUE_OFF 0
+/// @brief Torque states for Dynamixel motors.
+#define TORQUE_ON  1  ///< Torque enabled.
+#define TORQUE_OFF 0  ///< Torque disabled.
 
-// communication type
-#define SYNC 0
-#define BULK 1
+/// @brief Communication types for data transfer.
+#define SYNC 0  ///< Synchronous communication.
+#define BULK 1  ///< Bulk communication.
 
-// dxl error states
+/// @brief Error codes for Dynamixel operations.
 enum DxlError
 {
-  OK = 0,
-  CANNOT_FIND_CONTROL_ITEM = -1,
-  OPEN_PORT_FAIL = -2,
-  INDIRECT_ADDR_FAIL = -3,
-  ITEM_WRITE_FAIL = -4,
-  ITEM_READ_FAIL = -5,
-
-  SYNC_WRITE_FAIL = -6,
-  SYNC_READ_FAIL  = -7,
-  SET_SYNC_WRITE_FAIL = -8,
-  SET_SYNC_READ_FAIL = -9,
-
-  BULK_WRITE_FAIL = -10,
-  BULK_READ_FAIL  = -11,
-  SET_BULK_WRITE_FAIL = -12,
-  SET_BULK_READ_FAIL = -13,
-
-  SET_READ_ITEM_FAIL = -14,
-  SET_WRITE_ITEM_FAIL = -15,
-
-  DLX_HARDWARE_ERROR = -16,
-  DXL_REBOOT_FAIL = -17,
+  OK = 0,                          ///< No error.
+  CANNOT_FIND_CONTROL_ITEM = -1,   ///< Control item not found.
+  OPEN_PORT_FAIL = -2,             ///< Failed to open port.
+  INDIRECT_ADDR_FAIL = -3,         ///< Indirect address setup failed.
+  ITEM_WRITE_FAIL = -4,            ///< Failed to write item.
+  ITEM_READ_FAIL = -5,             ///< Failed to read item.
+  SYNC_WRITE_FAIL = -6,            ///< Sync write failed.
+  SYNC_READ_FAIL  = -7,            ///< Sync read failed.
+  SET_SYNC_WRITE_FAIL = -8,        ///< Failed to configure sync write.
+  SET_SYNC_READ_FAIL = -9,         ///< Failed to configure sync read.
+  BULK_WRITE_FAIL = -10,           ///< Bulk write failed.
+  BULK_READ_FAIL  = -11,           ///< Bulk read failed.
+  SET_BULK_WRITE_FAIL = -12,       ///< Failed to configure bulk write.
+  SET_BULK_READ_FAIL = -13,        ///< Failed to configure bulk read.
+  SET_READ_ITEM_FAIL = -14,        ///< Failed to set read item.
+  SET_WRITE_ITEM_FAIL = -15,       ///< Failed to set write item.
+  DLX_HARDWARE_ERROR = -16,        ///< Hardware error detected.
+  DXL_REBOOT_FAIL = -17            ///< Reboot failed.
 };
 
+/**
+ * @struct IndirectInfo
+ * @brief Structure for storing indirect addressing information for Dynamixel motors.
+ */
 typedef struct
 {
-  uint16_t indirect_data_addr;
-  uint16_t cnt;   // number of item
-  uint8_t size;  // total byte size
-  std::vector<std::string> item_name;
-  std::vector<uint8_t> item_size;
+  uint16_t indirect_data_addr;      ///< Base address for indirect data.
+  uint16_t cnt;                     ///< Number of control items.
+  uint8_t size;                     ///< Total size in bytes.
+  std::vector<std::string> item_name; ///< Names of the control items.
+  std::vector<uint8_t> item_size;  ///< Sizes of each control item in bytes.
 } IndirectInfo;
 
+/**
+ * @struct RWItemBufInfo
+ * @brief Buffer structure for read/write operations.
+ */
 typedef struct
 {
-  uint8_t id;
-  ControlItem control_item;
-  uint32_t data;
-  bool read_flag;
+  uint8_t id;                       ///< ID of the Dynamixel motor.
+  ControlItem control_item;         ///< Control item details.
+  uint32_t data;                    ///< Data associated with the control item.
+  bool read_flag;                   ///< Flag to indicate if the item has been read.
 } RWItemBufInfo;
 
+/**
+ * @struct RWItemList
+ * @brief List structure for managing read/write items for Dynamixel motors.
+ */
 typedef struct
 {
-  uint8_t id;
-  std::vector<std::string> item_name;
-  std::vector<uint8_t> item_size;
-  std::vector<uint16_t> item_addr;
-  std::vector<std::shared_ptr<double>> item_data_ptr_vec;
+  uint8_t id;                                  ///< ID of the Dynamixel motor.
+  std::vector<std::string> item_name;          ///< List of control item names.
+  std::vector<uint8_t> item_size;              ///< Sizes of the control items.
+  std::vector<uint16_t> item_addr;             ///< Addresses of the control items.
+  std::vector<std::shared_ptr<double>> item_data_ptr_vec; ///< Pointers to the data.
 } RWItemList;
 
 class Dynamixel
 {
 private:
-  ///////////////////////////////////////////////////////////////////////
   // dxl communication variable
   dynamixel::PortHandler * port_handler_;
   dynamixel::PacketHandler * packet_handler_;
 
-  ///////////////////////////////////////////////////////////////////////
   // dxl info variable from dxl_model file
   DynamixelInfo dxl_info_;
 
-  ///////////////////////////////////////////////////////////////////////
   // item write variable
   std::vector<RWItemBufInfo> write_item_buf_;
   std::vector<RWItemBufInfo> read_item_buf_;
   std::map<uint8_t /*id*/, bool> torque_state_;
 
-  ///////////////////////////////////////////////////////////////////////
   // read item (sync or bulk) variable
   bool read_type_;
   std::vector<RWItemList> read_data_list_;
@@ -129,7 +133,6 @@ private:
   // bulk read
   dynamixel::GroupBulkRead * group_bulk_read_;
 
-  ///////////////////////////////////////////////////////////////////////
   // write item (sync or bulk) variable
   bool write_type_;
   std::vector<RWItemList> write_data_list_;
@@ -146,7 +149,6 @@ public:
   explicit Dynamixel(const char * path);
   ~Dynamixel();
 
-  ///////////////////////////////////////////////////////////////////////
   // DXL Communication Setting
   DxlError InitDxlComm(std::vector<uint8_t> id_arr, std::string port_name, std::string baudrate);
   DxlError Reboot(uint8_t id);
@@ -164,26 +166,22 @@ public:
     std::vector<std::shared_ptr<double>> data_vec_ptr);
   DxlError SetMultiDxlWrite();
 
-  ///////////////////////////////////////////////////////////////////////
   // Read Item (sync or bulk)
   DxlError ReadMultiDxlData();
   // Write Item (sync or bulk)
   DxlError WriteMultiDxlData();
 
-  ///////////////////////////////////////////////////////////////////////
   // Set Dxl Option
   DxlError SetOperatingMode(uint8_t id, uint8_t dynamixel_mode);
   DxlError DynamixelEnable(std::vector<uint8_t> id_arr);
   DxlError DynamixelDisable(std::vector<uint8_t> id_arr);
 
-  ///////////////////////////////////////////////////////////////////////
   // DXL Item Write
   DxlError WriteItem(uint8_t id, std::string item_name, uint32_t data);
   DxlError WriteItem(uint8_t id, uint16_t addr, uint8_t size, uint32_t data);
   DxlError InsertWriteItemBuf(uint8_t id, std::string item_name, uint32_t data);
   DxlError WriteItemBuf();
 
-  ///////////////////////////////////////////////////////////////////////
   // DXL Item Read
   DxlError ReadItem(uint8_t id, std::string item_name, uint32_t & data);
   DxlError InsertReadItemBuf(uint8_t id, std::string item_name);
@@ -191,8 +189,6 @@ public:
   bool CheckReadItemBuf(uint8_t id, std::string item_name);
   uint32_t GetReadItemDataBuf(uint8_t id, std::string item_name);
 
-  ///////////////////////////////////////////////////////////////////////
-  // etc.
   DynamixelInfo GetDxlInfo() {return dxl_info_;}
   std::map<uint8_t, bool> GetDxlTorqueState() {return torque_state_;}
 

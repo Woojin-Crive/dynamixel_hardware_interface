@@ -198,15 +198,6 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  if (num_of_joints_ != hdl_joint_commands_.size() &&
-    num_of_joints_ != hdl_joint_states_.size())
-  {
-    RCLCPP_ERROR_STREAM(
-      logger_, "Error: number of joints " << num_of_joints_ << ", " <<
-        hdl_joint_commands_.size() << ", " << hdl_joint_commands_.size());
-    return hardware_interface::CallbackReturn::ERROR;
-  }
-
   hdl_sensor_states_.clear();
   for (const hardware_interface::ComponentInfo & sensor : info_.sensors) {
     HandlerVarType temp_state;
@@ -358,7 +349,6 @@ hardware_interface::CallbackReturn DynamixelHardware::start()
 
   usleep(500 * 1000);
 
-  // torque on
   dxl_comm_->DynamixelEnable(dxl_id_);
 
   RCLCPP_INFO_STREAM(logger_, "Dynamixel Hardware Start!");
@@ -368,7 +358,6 @@ hardware_interface::CallbackReturn DynamixelHardware::start()
 
 hardware_interface::CallbackReturn DynamixelHardware::stop()
 {
-  // torque off
   dxl_comm_->DynamixelDisable(dxl_id_);
 
   RCLCPP_INFO_STREAM(logger_, "Dynamixel Hardware Stop!");
@@ -490,7 +479,6 @@ DxlError DynamixelHardware::CheckError(DxlError dxl_comm_err)
     }
   }
 
-  // Setup joint state handlers
   for (size_t i = 0; i < num_of_joints_; i++) {
     for (size_t j = 0; j < hdl_joint_states_.at(i).interface_name_vec.size(); j++) {
       if (hdl_joint_states_.at(i).interface_name_vec.at(j) == HW_IF_HARDWARE_STATE) {
@@ -573,7 +561,7 @@ bool DynamixelHardware::InitDxlReadItems()
     hdl_gpio_sensor_states_.clear();
     for (const hardware_interface::ComponentInfo & gpio : info_.gpios) {
       if (gpio.state_interfaces.size() && gpio.parameters.at("type") == "dxl") {
-        // read item
+
         uint8_t id = static_cast<uint8_t>(stoi(gpio.parameters.at("ID")));
         HandlerVarType temp_read;
 
@@ -919,7 +907,6 @@ void DynamixelHardware::set_dxl_torque_srv_callback(
     }
   }
 
-  // Get the start time
   auto start = std::chrono::steady_clock::now();
   while (std::chrono::steady_clock::now() - start < std::chrono::seconds(1)) {
     if (dxl_torque_status_ == TORQUE_ENABLED) {
