@@ -52,6 +52,7 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
   const hardware_interface::HardwareInfo & info)
 {
   if (hardware_interface::SystemInterface::on_init(info) != hardware_interface::CallbackReturn::SUCCESS) {
+    RCLCPP_ERROR_STREAM(logger_, "Failed to initialize DynamixelHardware");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -113,14 +114,17 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
   }
 
   if (!InitDxlItems()) {
+    RCLCPP_ERROR_STREAM(logger_, "Error: InitDxlItems");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (!InitDxlReadItems()) {
+    RCLCPP_ERROR_STREAM(logger_, "Error: InitDxlReadItems");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
   if (!InitDxlWriteItems()) {
+    RCLCPP_ERROR_STREAM(logger_, "Error: InitDxlWriteItems");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
@@ -157,12 +161,16 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
         HW_IF_HARDWARE_STATE != it.name &&
         HW_IF_TORQUE_ENABLE != it.name)
       {
+        RCLCPP_ERROR_STREAM(
+          logger_, "Error: invalid joint state interface " << it.name);
         return hardware_interface::CallbackReturn::ERROR;
       }
       if (it.name != hardware_interface::HW_IF_POSITION &&
         it.name != hardware_interface::HW_IF_VELOCITY &&
         it.name != hardware_interface::HW_IF_EFFORT)
       {
+        RCLCPP_ERROR_STREAM(
+          logger_, "Error: invalid joint command interface " << it.name);
         temp_state.interface_name_vec.push_back(it.name);
         temp_state.value_ptr_vec.push_back(std::make_shared<double>(0.0));
       }
@@ -369,6 +377,7 @@ hardware_interface::return_type DynamixelHardware::read(
     const rclcpp::Time & time, const rclcpp::Duration & period)
 {
   if (dxl_status_ == REBOOTING) {
+    RCLCPP_ERROR_STREAM(logger_, "Dynamixel Read Fail : REBOOTING");
     return hardware_interface::return_type::ERROR;
   } else if (dxl_status_ == DXL_OK || dxl_status_ == COMM_ERROR) {
     dxl_comm_err_ = CheckError(dxl_comm_->ReadMultiDxlData());
@@ -428,6 +437,7 @@ hardware_interface::return_type DynamixelHardware::write(
 
     return hardware_interface::return_type::OK;
   } else {
+    RCLCPP_ERROR_STREAM(logger_, "Dynamixel Write Fail");
     return hardware_interface::return_type::ERROR;
   }
 }
