@@ -77,6 +77,16 @@ hardware_interface::CallbackReturn DynamixelHardware::on_init(
 
   RCLCPP_INFO_STREAM(logger_, "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
   RCLCPP_INFO_STREAM(logger_, "$$$$$ Init Dxl Comm Port");
+
+
+  if (info_.hardware_parameters.find("use_revolute_to_prismatic_gripper") != info_.hardware_parameters.end()) {
+    use_revolute_to_prismatic_ = std::stoi(info_.hardware_parameters.at("use_revolute_to_prismatic_gripper")) != 0;
+  }
+
+  if (use_revolute_to_prismatic_) {
+    RCLCPP_INFO(logger_, "Revolute to Prismatic gripper conversion enabled.");
+    initRevoluteToPrismaticParam();
+  }
   for (const hardware_interface::ComponentInfo & gpio : info_.gpios) {
     if (gpio.parameters.at("type") == "dxl") {
       dxl_id_.push_back(static_cast<uint8_t>(stoi(gpio.parameters.at("ID"))));
@@ -759,6 +769,10 @@ void DynamixelHardware::CalcTransmissionToJoint()
       value += transmission_to_joint_matrix_[i][j] *
         (*hdl_trans_states_.at(j).value_ptr_vec.at(PRESENT_POSITION_INDEX));
     }
+
+    if (hdl_joint_states_.at(i).name == conversion_joint_name_) {
+      value = revoluteToPrismatic(value);
+    }
     *hdl_joint_states_.at(i).value_ptr_vec.at(PRESENT_POSITION_INDEX) = value;
   }
 
@@ -783,13 +797,17 @@ void DynamixelHardware::CalcTransmissionToJoint()
 
 void DynamixelHardware::CalcJointToTransmission()
 {
-  // write
   for (size_t i = 0; i < num_of_transmissions_; i++) {
     double value = 0.0;
     for (size_t j = 0; j < num_of_joints_; j++) {
       value += joint_to_transmission_matrix_[i][j] *
         (*hdl_joint_commands_.at(j).value_ptr_vec.at(0));
     }
+
+    if (hdl_trans_commands_.at(i).name == conversion_dxl_name_) {
+      value = prismaticToRevolute(value);
+    }
+
     *hdl_trans_commands_.at(i).value_ptr_vec.at(0) = value;
   }
 }
@@ -942,6 +960,46 @@ void DynamixelHardware::set_dxl_torque_srv_callback(
   }
   response->success = false;
   response->message = "Fail to write requeset. main thread is not running.";
+}
+
+void DynamixelHardware::initRevoluteToPrismaticParam()
+{
+  if (info_.hardware_parameters.find("revolute_to_prismatic_dxl") != info_.hardware_parameters.end()) {
+    conversion_dxl_name_ = info_.hardware_parameters.at("revolute_to_prismatic_dxl");
+  }
+
+  if (info_.hardware_parameters.find("revolute_to_prismatic_joint") != info_.hardware_parameters.end()) {
+    conversion_joint_name_ = info_.hardware_parameters.at("revolute_to_prismatic_joint");
+  }
+
+  if (info_.hardware_parameters.find("prismatic_min") != info_.hardware_parameters.end()) {
+    prismatic_min_ = std::stod(info_.hardware_parameters.at("prismatic_min"));
+  }
+
+  if (info_.hardware_parameters.find("prismatic_max") != info_.hardware_parameters.end()) {
+    prismatic_max_ = std::stod(info_.hardware_parameters.at("prismatic_max"));
+  }
+
+  if (info_.hardware_parameters.find("revolute_min") != info_.hardware_parameters.end()) {
+    revolute_min_ = std::stod(info_.hardware_parameters.at("revolute_min"));
+  }
+
+  if (info_.hardware_parameters.find("revolute_max") != info_.hardware_parameters.end()) {
+    revolute_max_ = std::stod(info_.hardware_parameters.at("revolute_max"));
+  }
+
+  conversion_slope_ = (prismatic_max_ - prismatic_min_) / (revolute_max_ - revolute_min_);
+  conversion_intercept_ = prismatic_min_ - conversion_slope_ * revolute_min_;
+}
+
+double DynamixelHardware::revoluteToPrismatic(double revolute_value)
+{
+  return conversion_slope_ * revolute_value + conversion_intercept_;
+}
+
+double DynamixelHardware::prismaticToRevolute(double prismatic_value)
+{
+  return (prismatic_value - conversion_intercept_) / conversion_slope_;
 }
 
 }  // namespace dynamixel_hardware_interface

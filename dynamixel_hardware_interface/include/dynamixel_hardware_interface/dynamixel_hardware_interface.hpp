@@ -180,6 +180,15 @@ private:
   DxlTorqueStatus dxl_torque_status_;
   std::map<uint8_t /*id*/, bool /*enable*/> dxl_torque_state_;
   double err_timeout_sec_;
+  bool use_revolute_to_prismatic_{false};
+  std::string conversion_dxl_name_{""};
+  std::string conversion_joint_name_{""};
+  double prismatic_min_{0.0};
+  double prismatic_max_{0.0};
+  double revolute_min_{0.0};
+  double revolute_max_{0.0};
+  double conversion_slope_{0.0};
+  double conversion_intercept_{0.0};
 
   /**
    * @brief Starts the hardware interface.
@@ -305,6 +314,12 @@ private:
   void set_dxl_torque_srv_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+
+  void initRevoluteToPrismaticParam();
+
+  double revoluteToPrismatic(double revolute_value);
+
+  double prismaticToRevolute(double prismatic_value);
 
   int ros_update_freq_;
 };
