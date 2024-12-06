@@ -8,14 +8,14 @@ max_radian	3.14159265
 
 [control table]
 Address	Size	Data Name
-0	2	Model Number	
+0	2	Model Number
 2	4	Model Information
 6	1	Firmware Version
 7	1	ID
 8	1	Baud Rate
 9	1	Return Delay Time
-10	1	Drive Mode	
-11	1	Operating Mode	
+10	1	Drive Mode
+11	1	Operating Mode
 12	1	Secondary(Shadow) ID
 13	1	Protocol Type
 20	4	Homing Offset

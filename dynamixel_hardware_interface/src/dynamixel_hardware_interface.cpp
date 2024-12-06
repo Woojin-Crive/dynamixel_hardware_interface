@@ -364,7 +364,6 @@ hardware_interface::CallbackReturn DynamixelHardware::start()
       }
     }
   }
-
   usleep(500 * 1000);
 
   dxl_comm_->DynamixelEnable(dxl_id_);
