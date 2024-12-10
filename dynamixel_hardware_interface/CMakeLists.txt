@@ -71,11 +71,6 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}/
 )
 
-install(DIRECTORY
-  scripts
-  DESTINATION share/${PROJECT_NAME}/
-)
-
 install(DIRECTORY scripts
   DESTINATION share/${PROJECT_NAME}/
 )
