@@ -30,21 +30,21 @@ This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is p
 1. Clone the repository into your ROS workspace:
 
    ```bash
-   cd ~/your_workspace/src
+   cd ~/${WORKSPACE}/src
    git clone https://github.com/your-repository/dynamixel_hardware_interface.git
    ```
 
 2. Build the package:
 
    ```bash
-   cd ~/your_workspace
+   cd ~/${WORKSPACE}
    colcon build
    ```
 
 3. Source your workspace:
 
    ```bash
-   source ~/your_workspace/install/setup.bash
+   source ~/${WORKSPACE}/install/setup.bash
    ```
 
 ---
@@ -53,7 +53,7 @@ This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is p
 
 This project integrates with the following ROS 2 packages to provide extended functionality:
 
-- **[open_manipulator_x](https://github.com/ROBOTIS-GIT/open_manipulator_x)**
+- **[open_manipulator_x](https://github.com/ROBOTIS-GIT/open_manipulator)**
   A ROS-based open-source software package designed for the **Open Manipulator-X**, a 4-DOF robotic arm. It provides essential features like motion planning, kinematics, and control utilities for seamless integration with ROS 2 environments.
 
 - **[open_manipulator_y](https://github.com/ROBOTIS-GIT/open_manipulator_y)**
@@ -77,25 +77,10 @@ To effectively use the **Dynamixel Hardware Interface** in a ROS 2 control syste
 These parameters define how the interface communicates with the Dynamixel motors:
 
 - **`port_name`**: Serial port for communication.
-   **Default**: `/dev/ttyUSB0`
-
-  ```xml
-  <param name="port_name">/dev/ttyUSB0</param>
-  ```
-
+  
 - **`baud_rate`**: Communication baud rate.
-   **Default**: `1000000`
-
-  ```xml
-  <param name="baud_rate">1000000</param>
-  ```
-
+  
 - **`error_timeout_sec`**: Timeout for communication errors.
-   **Default**: `0.2`
-
-  ```xml
-  <param name="error_timeout_sec">0.2</param>
-  ```
 
 ------
 
@@ -104,30 +89,10 @@ These parameters define how the interface communicates with the Dynamixel motors
 These parameters define the hardware setup:
 
 - **`number_of_joints`**: Total number of joints.
-   **Default**: `5`
-
-  ```xml
-  <param name="number_of_joints">5</param>
-  ```
-
+  
 - **`number_of_transmissions`**: Number of transmissions.
-   **Default**: `5`
-
-  ```xml
-  <param name="number_of_transmissions">5</param>
-  ```
-
+  
 - **Transmission Matrices**: Define joint-to-transmission mappings.
-
-  ```xml
-  <param name="transmission_to_joint_matrix">
-    1, 0, 0, 0, 0,
-    0, 1, 0, 0, 0,
-    0, 0, 1, 0, 0,
-    0, 0, 0, 1, 0,
-    0, 0, 0, 0, 1
-  </param>
-  ```
 
 ------
 
@@ -146,11 +111,8 @@ Joints define the control and state interfaces for robot movement:
 
    ```xml
    <command_interface name="position">
-     <param name="min">${-pi*0.1}</param>
-     <param name="max">${pi*0.1}</param>
-   </command_interface>
    ```
-
+   
 2. **`<state_interface>`**: Monitors joint state data.
 
    ```xml
@@ -159,57 +121,50 @@ Joints define the control and state interfaces for robot movement:
    <state_interface name="effort"/>
    ```
 
-##### **Example Joint Configuration**
+---
 
-```xml
-<joint name="${prefix}joint1">
-  <command_interface name="position">
-    <param name="min">${-pi*0.1}</param>
-    <param name="max">${pi*0.1}</param>
-  </command_interface>
-  <state_interface name="position"/>
-  <state_interface name="velocity"/>
-  <state_interface name="effort"/>
-</joint>
-```
+### **4. GPIO Configuration**
+
+The GPIO tag is used to define the configuration of Dynamixel motors in a robotics system. It serves as a declarative structure to set up motor-specific parameters, command interfaces, and state monitoring capabilities. This allows seamless integration of Dynamixel hardware with software frameworks.
 
 ------
 
-#### **4. GPIO Configuration**
+#### **Key Attributes**
 
-The GPIO tag defines Dynamixel motors or similar components.
+- **`name`**: A unique identifier for the motor configuration (e.g., `dxl1`).
+- **`ID`**: The unique ID assigned to the motor in the Dynamixel network (e.g., `11`).
 
-##### **Key Attributes**
+------
 
-- **`name`**: Unique name for the motor (e.g., `dxl1`).
-- **`ID`**: Motor ID (e.g., `11`).
+#### **Sub-Elements**
 
-##### **Sub-Elements**
+1. **`<param>`**: Specifies motor-specific settings. These parameters correspond to the properties of the Dynamixel motor, such as its type, control mode, or PID gain values.
 
-1. **`<param>`**: Motor-specific settings.
-
-   ```xml
+   ```
    <param name="type">dxl</param>
-   <param name="ID">11</param>
    ```
 
-2. **`<command_interface>`**: Sends commands to motors.
+2. **`<command_interface>`**: Defines the control commands that can be sent to the motor. For example, setting the desired goal position.
 
-   ```xml
+   ```
    <command_interface name="Goal Position"/>
    ```
 
-3. **`<state_interface>`**: Monitors motor state data.
+3. **`<state_interface>`**: Specifies the state feedback interfaces to monitor real-time motor data, such as position, velocity, and current.
 
-   ```xml
+   ```
    <state_interface name="Present Position"/>
    <state_interface name="Present Velocity"/>
    <state_interface name="Present Current"/>
    ```
 
-##### **Example GPIO Configuration**
+------
 
-```xml
+#### **Example GPIO Configuration**
+
+Below is an example of a fully defined GPIO configuration for a Dynamixel motor. This example demonstrates how to configure a motor with ID `11`, define command interfaces, monitor state data, and set additional parameters such as PID gains and drive mode.
+
+```
 <gpio name="dxl1">
   <param name="type">dxl</param>
   <param name="ID">11</param>
@@ -217,16 +172,41 @@ The GPIO tag defines Dynamixel motors or similar components.
   <state_interface name="Present Position"/>
   <state_interface name="Present Velocity"/>
   <state_interface name="Present Current"/>
-  <param name="Position P Gain">800</param>
-  <param name="Position I Gain">100</param>
-  <param name="Position D Gain">100</param>
-  <param name="Drive Mode">0</param>
+  <param name="Position P Gain">800</param> <!-- Proportional gain for position control -->
+  <param name="Position I Gain">100</param> <!-- Integral gain for position control -->
+  <param name="Position D Gain">100</param> <!-- Derivative gain for position control -->
+  <param name="Drive Mode">0</param> <!-- 0: Clockwise, 1: Counterclockwise -->
 </gpio>
 ```
 
 ------
 
-###
+#### **Dynamixel Control Table Reference**
+
+The Dynamixel hardware interface uses control tables, defined in model-specific files such as `xm430_w350.model`, to configure and interact with the motor's internal settings. These control tables map hardware parameters to specific memory addresses and data types, enabling fine-grained control and monitoring.
+
+Example from `xm430_w350.model`:
+
+```
+[Control Table]
+Address   Size    Data Name
+0         2       Model Number
+2         4       Model Information
+6         1       Firmware Version
+7         1       ID
+...
+```
+
+##### **Usage**
+
+- The control table specifies the internal memory layout of the Dynamixel motor.
+- For instance, you can set the motor ID at address `7`, or configure firmware-specific options at address `6`.
+
+These settings can be defined within the GPIO configuration or dynamically updated through commands based on the control table schema.
+
+This professional explanation highlights the flexibility and precision of the Dynamixel hardware interface, empowering developers to fully utilize their motor's capabilities within a structured framework. For further details, refer to the [official Dynamixel e-Manual](https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#control-table-of-eeprom-area).
+
+
 
 ## **6. Usage**
 
@@ -246,17 +226,13 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 ------
 
-#### Parameter Descriptions
+#### Topic and Service Descriptions
 
 ##### 1. **dynamixel_state_pub_msg_name**
 
-- **Description**: Defines the topic name for publishing the Dynamixel state.
+- **Description**: Defines the topic name for publishing **the Dynamixel state.**
 
 - **Default Value**: `dynamixel_hardware_interface/dxl_state`
-
-  ```bash
-  ros2 topic echo /dynamixel_hardware_interface/dxl_state
-  ```
 
 ------
 
@@ -266,10 +242,6 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - **Default Value**: `dynamixel_hardware_interface/get_dxl_data`
 
-  ```bash
-  ros2 service call /dynamixel_hardware_interface/get_dxl_data dynamixel_sdk_custom_interfaces/srv/GetMotorState "{id: 1}"
-  ```
-
 ------
 
 ##### 3. **set_dynamixel_data_srv_name**
@@ -277,10 +249,6 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 - **Description**: Specifies the service name for setting Dynamixel data.
 
 - **Default Value**: `dynamixel_hardware_interface/set_dxl_data`
-
-  ```bash
-  ros2 service call /dynamixel_hardware_interface/set_dxl_data dynamixel_sdk_custom_interfaces/srv/SetMotorData "{id: 1, address: 64, data: 1}"
-  ```
 
 ------
 
@@ -290,10 +258,6 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - **Default Value**: `dynamixel_hardware_interface/reboot_dxl`
 
-  ```bash
-  ros2 service call /dynamixel_hardware_interface/reboot_dxl dynamixel_sdk_custom_interfaces/srv/RebootDxl "{id: 1}"
-  ```
-
 ------
 
 ##### 5. **set_dxl_torque_srv_name**
@@ -302,42 +266,17 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - **Default Value**: `dynamixel_hardware_interface/set_dxl_torque`
 
-  ```bash
-  ros2 service call /dynamixel_hardware_interface/set_dxl_torque std_srvs/srv/SetBool "{data: true}"
-  ```
-
 
 
 ---
 
-## **7. Troubleshooting**
-
-### **Common Issues**
-
-1. **Device Not Found**
-
-   - Ensure the correct port is specified in the YAML file (e.g., `/dev/ttyUSB0`).
-
-   - Check if the USB device has proper permissions:
-
-     ```bash
-     sudo chmod 666 /dev/ttyUSB0
-     ```
-
-2. **No Response from Motor**
-
-   - Verify the motor ID and baud rate match the configuration file.
-   - Confirm the motor is powered and connected properly.
-
----
-
-## **8. Contributing**
+## **7. Contributing**
 
 We welcome contributions! Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) to submit issues or pull requests.
 
 ---
 
-## **9. License**
+## **8. License**
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
