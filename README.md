@@ -199,15 +199,15 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - Example Parameter Configuration
 
-```xml
-<ros2_control>
-    <param name="dynamixel_state_pub_msg_name">dynamixel_hardware_interface/dxl_state</param>
-    <param name="get_dynamixel_data_srv_name">dynamixel_hardware_interface/get_dxl_data</param>
-    <param name="set_dynamixel_data_srv_name">dynamixel_hardware_interface/set_dxl_data</param>
-    <param name="reboot_dxl_srv_name">dynamixel_hardware_interface/reboot_dxl</param>
-    <param name="set_dxl_torque_srv_name">dynamixel_hardware_interface/set_dxl_torque</param>
-</ros2_control>
-```
+  ```xml
+  <ros2_control>
+      <param name="dynamixel_state_pub_msg_name">dynamixel_hardware_interface/dxl_state</param>
+      <param name="get_dynamixel_data_srv_name">dynamixel_hardware_interface/get_dxl_data</param>
+      <param name="set_dynamixel_data_srv_name">dynamixel_hardware_interface/set_dxl_data</param>
+      <param name="reboot_dxl_srv_name">dynamixel_hardware_interface/reboot_dxl</param>
+      <param name="set_dxl_torque_srv_name">dynamixel_hardware_interface/set_dxl_torque</param>
+  </ros2_control>
+  ```
 
 #### Topic and Service Descriptions
 
