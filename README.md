@@ -4,7 +4,6 @@
 
 ROS 2 package providing a hardware interface for controlling [Dynamixel](https://www.dynamixel.com/) motors via the [ros2_control framework](https://github.com/ros-controls/ros2_control). This repository includes the **dynamixel_hardware_interface plugin** for seamless integration with ROS 2 control, along with the [dynamixel_interfaces](https://github.com/ROBOTIS-GIT/dynamixel_interfaces) package containing custom message definitions used by the interface
 
----
 
 ## 2. **Prerequisites**
 
@@ -25,7 +24,6 @@ This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is p
   - USB2 Dynamixel or U2D2 adapter
   - Proper power supply for Dynamixel motors
 
----
 
 ## **3. Installation**
 
@@ -50,7 +48,6 @@ This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is p
    source ~/${WORKSPACE}/install/setup.bash
    ```
 
----
 
 ## 4. Currently Used Packages
 
@@ -61,9 +58,6 @@ This project integrates with the following ROS 2 packages to provide extended fu
 
 - **[open_manipulator_y](https://github.com/ROBOTIS-GIT/open_manipulator_y)**
   A ROS-based package tailored for the **Open Manipulator-Y**, a 6-DOF robotic arm. This package offers enhanced compatibility and extended functionalities for advanced manipulator control and operations.
-
-----
-
 
 
 ## 5. Configuration
@@ -85,8 +79,6 @@ These parameters define how the interface communicates with the Dynamixel motors
 
 - **`error_timeout_sec`**: Timeout for communication errors.
 
-------
-
 #### **2. Hardware Configuration**
 
 These parameters define the hardware setup:
@@ -96,8 +88,6 @@ These parameters define the hardware setup:
 - **`number_of_transmissions`**: Number of transmissions.
 
 - **Transmission Matrices**: Define joint-to-transmission mappings.
-
-------
 
 #### **3. Joint Configuration**
 
@@ -124,22 +114,19 @@ Joints define the control and state interfaces for robot movement:
    <state_interface name="effort"/>
    ```
 
----
 
-### **4. GPIO Configuration**
+#### **4. GPIO Configuration**
 
 The GPIO tag is used to define the configuration of Dynamixel motors in a robotics system. It serves as a declarative structure to set up motor-specific parameters, command interfaces, and state monitoring capabilities. This allows seamless integration of Dynamixel hardware with software frameworks.
 
-------
 
-#### **Key Attributes**
+##### **Key Attributes**
 
 - **`name`**: A unique identifier for the motor configuration (e.g., `dxl1`).
 - **`ID`**: The unique ID assigned to the motor in the Dynamixel network (e.g., `11`).
 
-------
 
-#### **Sub-Elements**
+##### **Sub-Elements**
 
 1. **`<param>`**: Specifies motor-specific settings. These parameters correspond to the properties of the Dynamixel motor, such as its type, control mode, or PID gain values.
 
@@ -161,9 +148,7 @@ The GPIO tag is used to define the configuration of Dynamixel motors in a roboti
    <state_interface name="Present Current"/>
    ```
 
-------
-
-#### **Example GPIO Configuration**
+##### **Example GPIO Configuration**
 
 Below is an example of a fully defined GPIO configuration for a Dynamixel motor. This example demonstrates how to configure a motor with ID `11`, define command interfaces, monitor state data, and set additional parameters such as PID gains and drive mode.
 
@@ -182,9 +167,7 @@ Below is an example of a fully defined GPIO configuration for a Dynamixel motor.
 </gpio>
 ```
 
-------
-
-#### **Dynamixel Control Table Reference**
+##### **Dynamixel Control Table Reference**
 
 The Dynamixel hardware interface uses control tables, defined in model-specific files such as `xm430_w350.model`, to configure and interact with the motor's internal settings. These control tables map hardware parameters to specific memory addresses and data types, enabling fine-grained control and monitoring.
 
@@ -210,7 +193,6 @@ These settings can be defined within the GPIO configuration or dynamically updat
 This professional explanation highlights the flexibility and precision of the Dynamixel hardware interface, empowering developers to fully utilize their motor's capabilities within a structured framework. For further details, refer to the [official Dynamixel e-Manual](https://emanual.robotis.com/docs/en/dxl/x/xm430-w350/#control-table-of-eeprom-area).
 
 
-
 ## **6. Usage**
 
 Ensure the parameters are configured correctly in your `ros2_control` YAML file or XML launch file.
@@ -227,8 +209,6 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 </ros2_control>
 ```
 
-------
-
 #### Topic and Service Descriptions
 
 ##### 1. **dynamixel_state_pub_msg_name**
@@ -237,7 +217,6 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - **Default Value**: `dynamixel_hardware_interface/dxl_state`
 
-------
 
 ##### 2. **get_dynamixel_data_srv_name**
 
@@ -245,23 +224,17 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 
 - **Default Value**: `dynamixel_hardware_interface/get_dxl_data`
 
-------
-
 ##### 3. **set_dynamixel_data_srv_name**
 
 - **Description**: Specifies the service name for setting Dynamixel data.
 
 - **Default Value**: `dynamixel_hardware_interface/set_dxl_data`
 
-------
-
 ##### 4. **reboot_dxl_srv_name**
 
 - **Description**: Specifies the service name for rebooting Dynamixel motors.
 
 - **Default Value**: `dynamixel_hardware_interface/reboot_dxl`
-
-------
 
 ##### 5. **set_dxl_torque_srv_name**
 
@@ -270,17 +243,11 @@ Ensure the parameters are configured correctly in your `ros2_control` YAML file 
 - **Default Value**: `dynamixel_hardware_interface/set_dxl_torque`
 
 
-
----
-
 ## **7. Contributing**
 
 We welcome contributions! Please follow the guidelines in [CONTRIBUTING.md](CONTRIBUTING.md) to submit issues or pull requests.
 
----
 
 ## **8. License**
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
