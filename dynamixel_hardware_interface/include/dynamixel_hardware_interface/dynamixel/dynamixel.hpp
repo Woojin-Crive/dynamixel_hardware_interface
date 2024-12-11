@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright 2020 ROBOTIS CO., LTD.
+* Copyright 2024 ROBOTIS CO., LTD.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/
-/* Authors: Hye-Jong KIM, Yong-Ho Na, Sungho Woo*/
+/* Authors: Hye-Jong KIM, Sungho Woo */
 
 #ifndef DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL__DYNAMIXEL_HPP_
 #define DYNAMIXEL_HARDWARE_INTERFACE__DYNAMIXEL__DYNAMIXEL_HPP_

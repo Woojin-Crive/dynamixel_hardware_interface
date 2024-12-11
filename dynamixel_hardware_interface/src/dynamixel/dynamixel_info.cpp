@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright 2020 ROBOTIS CO., LTD.
+* Copyright 2024 ROBOTIS CO., LTD.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 *******************************************************************************/
-/* Authors: Hye-Jong KIM, Yong-Ho Na */
+/* Authors: Hye-Jong KIM*/
 
 #include "dynamixel_hardware_interface/dynamixel/dynamixel_info.hpp"
 #include <string>
@@ -56,7 +56,6 @@ void DynamixelInfo::ReadDxlModelFile(uint8_t id, uint16_t model_num)
 {
   std::string path = dxl_model_file_dir + "/";
 
-  // find model file path
   auto it = dxl_model_list_.find(model_num);
   if (it != dxl_model_list_.end()) {
     path += it->second;
@@ -65,22 +64,17 @@ void DynamixelInfo::ReadDxlModelFile(uint8_t id, uint16_t model_num)
     return;
   }
 
-  // fprintf(stderr, "[DBG] find model file\n");
-
-  // file open
   std::ifstream open_file(path);
   if (open_file.is_open() != 1) {
     fprintf(stderr, "[ERROR] CANNOT FIND DXL [%s] MODEL FILE.\n", path.c_str());
     exit(-1);
   }
-  // fprintf(stderr, "[DBG] find model file open\n");
 
   DxlInfo temp_dxl_info;
   std::string line;
 
   temp_dxl_info.model_num = model_num;
 
-  // read type info
   while (!open_file.eof() ) {
     getline(open_file, line);
     if (strcmp(line.c_str(), "[control table]") == 0) {
@@ -104,9 +98,7 @@ void DynamixelInfo::ReadDxlModelFile(uint8_t id, uint16_t model_num)
       temp_dxl_info.torque_constant = static_cast<double>(stod(strs.at(1)));
     }
   }
-  // fprintf(stderr, "[DBG] read type info\n");
 
-  // read control table item
   getline(open_file, line);
   while (!open_file.eof() ) {
     getline(open_file, line);
@@ -117,17 +109,12 @@ void DynamixelInfo::ReadDxlModelFile(uint8_t id, uint16_t model_num)
     std::vector<std::string> strs;
     boost::split(strs, line, boost::is_any_of("\t"));
 
-    // fprintf(stderr, "[DBG] address %s.\n", strs.at(0).c_str());
-    // fprintf(stderr, "[DBG] size %s.\n", strs.at(1).c_str());
-    // fprintf(stderr, "[DBG] name %s.\n", strs.at(2).c_str());
-
     ControlItem temp;
     temp.address = static_cast<uint16_t>(stoi(strs.at(0)));
     temp.size = static_cast<uint8_t>(stoi(strs.at(1)));
     temp.item_name = strs.at(2);
     temp_dxl_info.item.push_back(temp);
   }
-  // fprintf(stderr, "[DBG] read control item\n");
 
   dxl_info_[id] = temp_dxl_info;
   open_file.close();
@@ -206,6 +193,4 @@ double DynamixelInfo::ConvertValueToRadian(uint8_t id, int32_t value)
     return 0.0;
   }
 }
-
-
 }  // namespace dynamixel_hardware_interface

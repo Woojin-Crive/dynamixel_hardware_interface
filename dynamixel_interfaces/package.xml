@@ -3,11 +3,10 @@
   <name>dynamixel_interfaces</name>
   <version>1.0.0</version>
   <description>ROS2 package for dynamixel_interfaces</description>
-  <maintainer email="wsh@robotis.com">hpaper</maintainer>
+  <maintainer email="pyo@robotis.com">Pyo</maintainer>
   <license>ROBOTIS</license>
-  <author email="hjkim@robotis.com">hjkim</author>
-  <author email="yhna@robotis.com">yhna</author>
-  <author email="wsh@robotis.com">yhna</author>
+  <author email="hjkim@robotis.com">Hye-Jong KIM</author>
+  <author email="wsh@robotis.com">Sungho Woo</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>rosidl_default_generators</buildtool_depend>

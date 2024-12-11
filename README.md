@@ -77,9 +77,9 @@ To effectively use the **Dynamixel Hardware Interface** in a ROS 2 control syste
 These parameters define how the interface communicates with the Dynamixel motors:
 
 - **`port_name`**: Serial port for communication.
-  
+
 - **`baud_rate`**: Communication baud rate.
-  
+
 - **`error_timeout_sec`**: Timeout for communication errors.
 
 ------
@@ -89,9 +89,9 @@ These parameters define how the interface communicates with the Dynamixel motors
 These parameters define the hardware setup:
 
 - **`number_of_joints`**: Total number of joints.
-  
+
 - **`number_of_transmissions`**: Number of transmissions.
-  
+
 - **Transmission Matrices**: Define joint-to-transmission mappings.
 
 ------
@@ -112,7 +112,7 @@ Joints define the control and state interfaces for robot movement:
    ```xml
    <command_interface name="position">
    ```
-   
+
 2. **`<state_interface>`**: Monitors joint state data.
 
    ```xml
