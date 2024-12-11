@@ -31,7 +31,8 @@ This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is p
 
    ```bash
    cd ~/${WORKSPACE}/src
-   git clone https://github.com/your-repository/dynamixel_hardware_interface.git
+   git clone -b humble https://github.com/ROBOTIS-GIT/dynamixel_hardware_interface.git
+   git clone -b humble https://github.com/ROBOTIS-GIT/dynamixel_interfaces.git
    ```
 
 2. Build the package:
