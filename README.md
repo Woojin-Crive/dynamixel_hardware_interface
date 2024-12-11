@@ -2,26 +2,28 @@
 
 ## **1. Introduction**
 
-ROS 2 package providing a hardware interface for controlling [Dynamixel](https://www.robotis.us/dynamixel/) motors via the ros2_control framework. This repository includes the **dynamixel_hardware_interface plugin** for seamless integration with ROS 2 control, along with the dynamixel_interfaces package containing custom message definitions used by the interface
+ROS 2 package providing a hardware interface for controlling [Dynamixel](https://www.dynamixel.com/) motors via the [ros2_control framework](https://github.com/ros-controls/ros2_control). This repository includes the **dynamixel_hardware_interface plugin** for seamless integration with ROS 2 control, along with the [dynamixel_interfaces](https://github.com/ROBOTIS-GIT/dynamixel_interfaces) package containing custom message definitions used by the interface
 
 ---
 
 ## 2. **Prerequisites**
 
 ![ROS 2 Humble](https://img.shields.io/badge/ROS2-Humble-blue)
+
 This package currently supports ROS 2 Humble only. Ensure that ROS 2 Humble is properly installed (ROS 2 Humble installation guide).
 
-- Dynamixel SDK: Install the Dynamixel SDK using the following command:
+- [Dynamixel SDK](https://github.com/ROBOTIS-GIT/DynamixelSDK):
+  - Install the Dynamixel SDK using the following command:
 
-  ```bash
-  sudo apt install ros-humble-dynamixel-sdk
-  ```
+    ```bash
+    sudo apt install ros-humble-dynamixel-sdk
+    ```
 
 - Hardware Requirements:
 
   - Dynamixel servos
   - USB2 Dynamixel or U2D2 adapter
-  - Proper power supply for Dynamixel motors.
+  - Proper power supply for Dynamixel motors
 
 ---
 
@@ -282,4 +284,3 @@ We welcome contributions! Please follow the guidelines in [CONTRIBUTING.md](CONT
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
-
